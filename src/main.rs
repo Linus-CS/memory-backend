@@ -192,10 +192,6 @@ async fn main() {
 
     let image_route = warp::path("img").and(warp::fs::dir("images"));
 
-    let any = warp::any()
-        .and(warp::header::headers_cloned())
-        .map(|headers: warp::hyper::HeaderMap| println!("{:?}", headers));
-
     let routes = ping_route
         .or(create_route)
         .or(join_route)
