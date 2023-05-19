@@ -192,6 +192,15 @@ async fn main() {
 
     let image_route = warp::path("img").and(warp::fs::dir("images"));
 
+    async fn any_map(headers: warp::hyper::HeaderMap) -> Result<impl Reply, Rejection> {
+        println!("{:?}", headers);
+        Ok(warp::reply::json(&"Hey"))
+    }
+
+    let any = warp::any()
+        .and(warp::header::headers_cloned())
+        .and_then(any_map);
+
     let routes = ping_route
         .or(create_route)
         .or(join_route)
@@ -199,6 +208,7 @@ async fn main() {
         .or(ready_route)
         .or(pick_card_route)
         .or(image_route)
+        .or(any)
         .with(cors)
         .recover(handle_rejection);
 
