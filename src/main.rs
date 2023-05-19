@@ -154,6 +154,7 @@ async fn main() {
     let store = warp::any().map(move || store.clone());
 
     let set_key = move |master_key: String| -> Result<WithHeader<_>, Rejection> {
+        println!("Setting key: {}", master_key.clone());
         if master_key == key {
             Ok(warp::reply::with_header(
                 warp::reply::reply(),
