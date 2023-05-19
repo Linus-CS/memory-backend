@@ -129,6 +129,7 @@ type Store = Arc<RwLock<MemoryStore>>;
 #[tokio::main]
 async fn main() {
     let key = env::var("MASTER_KEY").expect("No MASTER_KEY set");
+    println!("Master key: {}", key.clone());
 
     let cors = warp::cors()
         .allow_any_origin()
