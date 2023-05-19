@@ -14,6 +14,11 @@ use warp::{
 };
 
 #[derive(serde::Deserialize)]
+struct KeyQuery {
+    key: String,
+}
+
+#[derive(serde::Deserialize)]
 struct CreateQuery {
     id: String,
 }
@@ -153,13 +158,13 @@ async fn main() {
     }));
     let store = warp::any().map(move || store.clone());
 
-    let set_key = move |master_key: String| -> Result<WithHeader<_>, Rejection> {
-        println!("Setting key: {}", master_key.clone());
-        if master_key == key {
+    let set_key = move |query: KeyQuery| -> Result<WithHeader<_>, Rejection> {
+        println!("Setting key: {}", query.key.clone());
+        if query.key == key {
             Ok(warp::reply::with_header(
                 warp::reply::reply(),
                 "Set-Cookie",
-                format!("master_key={master_key}; max-age=31536000; secure;"),
+                format!("master_key={}; max-age=31536000; secure;", query.key),
             ))
         } else {
             Err(warp::reject::custom(InvalidMasterKey))
@@ -174,7 +179,7 @@ async fn main() {
         .and_then(ping);
 
     let set_key_route = warp::get()
-        .and(warp::query::<String>())
+        .and(warp::query::<KeyQuery>())
         .and(warp::path("set_key"))
         .and(warp::path::end())
         .map(set_key)
