@@ -7,6 +7,7 @@ use tokio::sync::{
 };
 use tokio_stream::wrappers::ReceiverStream;
 use warp::{
+    hyper::HeaderMap,
     reject,
     reply::{Json, WithHeader},
     sse::Event,
@@ -158,8 +159,10 @@ async fn main() {
     }));
     let store = warp::any().map(move || store.clone());
 
-    let set_key = move |query: KeyQuery, origin: String| -> Result<WithHeader<_>, Rejection> {
-        println!("Origin: {}", origin.clone());
+    let set_key = move |query: KeyQuery,
+                        headers: warp::hyper::HeaderMap|
+          -> Result<WithHeader<_>, Rejection> {
+        println!("Origin: {:?}", headers);
         if query.key == key {
             Ok(warp::reply::with_header(
                 warp::reply::reply(),
@@ -181,7 +184,7 @@ async fn main() {
     let set_key_route = warp::get()
         .and(warp::path("set_key"))
         .and(warp::query::<KeyQuery>())
-        .and(warp::header("Origin"))
+        .and(warp::header::headers_cloned())
         .and(warp::path::end())
         .map(set_key)
         .and_then(|res: Result<WithHeader<_>, Rejection>| async move {
