@@ -6,7 +6,12 @@ use tokio::sync::{
     RwLock,
 };
 use tokio_stream::wrappers::ReceiverStream;
-use warp::{reject, reply::Json, sse::Event, Filter, Rejection, Reply};
+use warp::{
+    reject,
+    reply::{Json, WithHeader},
+    sse::Event,
+    Filter, Rejection, Reply,
+};
 
 #[derive(serde::Deserialize)]
 struct CreateQuery {
@@ -143,9 +148,21 @@ async fn main() {
 
     let store = Store::new(RwLock::new(MemoryStore {
         game: None,
-        master_key: key,
+        master_key: key.clone(),
     }));
     let store = warp::any().map(move || store.clone());
+
+    let set_key = move |master_key: String| -> Result<WithHeader<_>, Rejection> {
+        if master_key == key {
+            Ok(warp::reply::with_header(
+                warp::reply::reply(),
+                "Set-Cookie",
+                format!("master_key={master_key}; max-age=31536000; secure;"),
+            ))
+        } else {
+            Err(warp::reject::custom(InvalidMasterKey))
+        }
+    };
 
     let ping_route = warp::get()
         .and(warp::cookie::optional("memory_token"))
@@ -153,6 +170,15 @@ async fn main() {
         .and(warp::path::end())
         .and(store.clone())
         .and_then(ping);
+
+    let set_key_route = warp::get()
+        .and(warp::query::<String>())
+        .and(warp::path("set_key"))
+        .and(warp::path::end())
+        .map(set_key)
+        .and_then(|res: Result<WithHeader<_>, Rejection>| async move {
+            Ok::<_, Rejection>(res.unwrap())
+        });
 
     let create_route = warp::post()
         .and(warp::cookie("master_key"))
@@ -192,23 +218,14 @@ async fn main() {
 
     let image_route = warp::path("img").and(warp::fs::dir("images"));
 
-    async fn any_map(headers: warp::hyper::HeaderMap) -> Result<impl Reply, Rejection> {
-        println!("{:?}", headers);
-        Ok(warp::reply::json(&"Hey"))
-    }
-
-    let any = warp::any()
-        .and(warp::header::headers_cloned())
-        .and_then(any_map);
-
     let routes = ping_route
+        .or(set_key_route)
         .or(create_route)
         .or(join_route)
         .or(game_route)
         .or(ready_route)
         .or(pick_card_route)
         .or(image_route)
-        .or(any)
         .with(cors)
         .recover(handle_rejection);
 
