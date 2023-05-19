@@ -158,8 +158,8 @@ async fn main() {
     }));
     let store = warp::any().map(move || store.clone());
 
-    let set_key = move |query: KeyQuery| -> Result<WithHeader<_>, Rejection> {
-        println!("Setting key: {}", query.key.clone());
+    let set_key = move |query: KeyQuery, origin: String| -> Result<WithHeader<_>, Rejection> {
+        println!("Origin: {}", origin.clone());
         if query.key == key {
             Ok(warp::reply::with_header(
                 warp::reply::reply(),
@@ -179,8 +179,9 @@ async fn main() {
         .and_then(ping);
 
     let set_key_route = warp::get()
-        .and(warp::query::<KeyQuery>())
         .and(warp::path("set_key"))
+        .and(warp::query::<KeyQuery>())
+        .and(warp::header("Origin"))
         .and(warp::path::end())
         .map(set_key)
         .and_then(|res: Result<WithHeader<_>, Rejection>| async move {
