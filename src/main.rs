@@ -202,10 +202,10 @@ async fn main() {
         .with(cors)
         .recover(handle_rejection);
 
-    let port = 8080;
-    println!("Listening on port {port}");
+    let port: String = env::var("PORT").unwrap_or("8080".to_owned());
+    let port = port.parse::<u16>().expect("PORT is not a valid number");
 
-    //Dont forget to change to 0.0.0.0 for production
+    println!("Listening on port {port}");
     warp::serve(routes).run(([0, 0, 0, 0], port)).await;
 }
 
