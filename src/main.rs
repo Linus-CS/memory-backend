@@ -135,7 +135,6 @@ type Store = Arc<RwLock<MemoryStore>>;
 #[tokio::main]
 async fn main() {
     let key = env::var("MASTER_KEY").expect("No MASTER_KEY set");
-    println!("Master key: {}", key.clone());
 
     let cors = warp::cors()
         .allow_any_origin()
@@ -159,10 +158,8 @@ async fn main() {
     }));
     let store = warp::any().map(move || store.clone());
 
-    let set_key = move |query: KeyQuery,
-                        headers: warp::hyper::HeaderMap|
-          -> Result<WithHeader<_>, Rejection> {
-        println!("Origin: {:?}", headers);
+    let set_key = move |query: KeyQuery, origin: String| -> Result<WithHeader<_>, Rejection> {
+        println!("Origin: {:?}", origin);
         if query.key == key {
             Ok(warp::reply::with_header(
                 warp::reply::reply(),
@@ -184,7 +181,7 @@ async fn main() {
     let set_key_route = warp::get()
         .and(warp::path("set_key"))
         .and(warp::query::<KeyQuery>())
-        .and(warp::header::headers_cloned())
+        .and(warp::header("origin"))
         .and(warp::path::end())
         .map(set_key)
         .and_then(|res: Result<WithHeader<_>, Rejection>| async move {
