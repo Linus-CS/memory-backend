@@ -46,7 +46,6 @@ async fn main() {
     let key_route = warp::get()
         .and(warp::path("key"))
         .and(warp::query::raw())
-        .and(warp::header("referer"))
         .and(warp::path::end())
         .and(store.clone())
         .and_then(check_key);

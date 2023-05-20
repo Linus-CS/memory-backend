@@ -28,18 +28,11 @@ pub async fn ping(query: Option<String>, store: Store) -> Result<impl Reply, Rej
     Ok(warp::reply::with_status(reply, warp::http::StatusCode::OK))
 }
 
-pub async fn check_key(
-    key: String,
-    referer: String,
-    store: Store,
-) -> Result<impl Reply, Rejection> {
+pub async fn check_key(key: String, store: Store) -> Result<impl Reply, Rejection> {
     let lock = store.read().await;
     if lock.master_key == key {
-        let reply = warp::reply::reply();
-        let reply = warp::reply::with_header(reply, "Access-Control-Allow-Origin", referer);
-        let reply = warp::reply::with_header(reply, "Access-Control-Allow-Credentials", "true");
         Ok(warp::reply::with_header(
-            reply,
+            warp::reply(),
             "Set-Cookie",
             format!(
                 "master_key={}; max-age=31536000; SameSite=None; Secure; HttpOnly",
@@ -88,17 +81,11 @@ pub async fn join(query: JoinQuery, store: Store) -> Result<impl Reply, Rejectio
 
     println!("{} joined and got the token: {}", query.name, token);
 
-    let reply = warp::reply::with_header(
-        warp::reply::json(&"Success"),
-        "Access-Control-Allow-Credentials",
-        "true",
-    );
-
     Ok(warp::reply::with_header(
-        reply,
+        warp::reply(),
         "set-cookie",
         format!(
-            "memory_token={}; Path=/; SameSite=Strict; Max-Age=1209600; HttpOnly",
+            "memory_token={}; Max-Age=1209600; SameSite=None; Secure; HttpOnly",
             token
         ),
     ))
