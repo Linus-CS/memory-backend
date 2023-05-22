@@ -169,3 +169,28 @@ pub mod memory {
         pub master_key: String,
     }
 }
+
+pub mod icons {
+    pub const LINKS: [&str; 20] = [
+        "https://cdn-icons-png.flaticon.com/512/2977/2977402.png",
+        "https://cdn-icons-png.flaticon.com/512/1998/1998659.png",
+        "https://cdn-icons-png.flaticon.com/512/1864/1864475.png",
+        "https://cdn-icons-png.flaticon.com/512/3069/3069172.png",
+        "https://cdn-icons-png.flaticon.com/512/2153/2153090.png",
+        "https://cdn-icons-png.flaticon.com/512/1864/1864514.png",
+        "https://cdn-icons-png.flaticon.com/512/809/809052.png",
+        "https://cdn-icons-png.flaticon.com/512/1998/1998610.png",
+        "https://cdn-icons-png.flaticon.com/512/1864/1864470.png",
+        "https://cdn-icons-png.flaticon.com/512/1998/1998713.png",
+        "https://cdn-icons-png.flaticon.com/512/1998/1998627.png",
+        "https://cdn-icons-png.flaticon.com/512/3196/3196017.png",
+        "https://cdn-icons-png.flaticon.com/512/1067/1067840.png",
+        "https://cdn-icons-png.flaticon.com/512/1864/1864472.png",
+        "https://cdn-icons-png.flaticon.com/512/2977/2977327.png",
+        "https://cdn-icons-png.flaticon.com/512/1010/1010028.png",
+        "https://cdn-icons-png.flaticon.com/512/1998/1998804.png",
+        "https://cdn-icons-png.flaticon.com/512/1864/1864521.png",
+        "https://cdn-icons-png.flaticon.com/512/826/826912.png",
+        "https://cdn-icons-png.flaticon.com/512/3359/3359579.png",
+    ];
+}

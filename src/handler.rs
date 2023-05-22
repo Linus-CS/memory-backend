@@ -35,7 +35,7 @@ pub async fn check_key(key: String, store: Store) -> Result<impl Reply, Rejectio
             warp::reply(),
             "Set-Cookie",
             format!(
-                "master_key={}; max-age=31536000; SameSite=None; Secure; HttpOnly",
+                "master_key={}; Path=/; max-age=31536000; SameSite=None; Secure; HttpOnly",
                 key
             ),
         ))
