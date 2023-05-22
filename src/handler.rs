@@ -18,14 +18,18 @@ pub async fn ping(query: Option<String>, store: Store) -> Result<impl Reply, Rej
     if let Some(value) = query {
         if lock.game.as_ref().unwrap().players.get(&value).is_none() {
             println!("Removed token: {}", value);
-            return Ok(warp::reply::with_status(
+            let reply = warp::reply::with_status(reply, warp::http::StatusCode::GONE);
+            return Ok(warp::reply::with_header(
                 reply,
-                warp::http::StatusCode::GONE,
+                "Set-Cookie",
+                "memory_token=0; Max-Age=0",
             ));
         }
     }
 
-    Ok(warp::reply::with_status(reply, warp::http::StatusCode::OK))
+    let reply = warp::reply::with_status(reply, warp::http::StatusCode::OK);
+
+    Ok(warp::reply::with_header(reply, "", ""))
 }
 
 pub async fn check_key(key: String, store: Store) -> Result<impl Reply, Rejection> {
