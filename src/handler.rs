@@ -1,5 +1,6 @@
 use std::convert::Infallible;
 
+use memory_backend::reply::PickResponse;
 use rand::{thread_rng, Rng};
 use tokio_stream::wrappers::ReceiverStream;
 use warp::{reply::Json, sse::Event, Rejection, Reply};
@@ -103,19 +104,42 @@ pub async fn game_message(token: String, store: Store) -> Result<impl Reply, Rej
 }
 
 pub async fn pick_card(token: String, query: PickQuery, store: Store) -> Result<Json, Rejection> {
+    let lock = store.read().await;
+    let game = lock.game.as_ref().unwrap();
+    if let Some(player) = game.players.get(&token) {
+        if !player.turn {
+            return Err(warp::reject());
+        }
+    } else {
+        return Err(warp::reject());
+    }
+    let other_card = game.cards.iter().find(|x| x.flipped);
+
     let mut lock = store.write().await;
     let game = lock.game.as_mut().unwrap();
-    let player = game.players.get_mut(&token);
-    if player.is_none() {
-        return Err(warp::reject());
-    }
-    let player = player.unwrap();
-    if !player.turn {
-        return Err(warp::reject());
-    }
+    let player = game.players.get_mut(&token).unwrap();
 
-    // TODO: Check if card is valid
-    Ok(warp::reply::json(&"Success"))
+    if let Some(card1) = game.cards.get_mut(query.card) {
+        if card1.flipped {
+            return Err(warp::reject());
+        }
+        card1.flipped = true;
+
+        if let Some(card2) = other_card {
+            if card1.img_path == card2.img_path {
+                player.points += 1;
+            } else {
+                player.turn = false;
+            }
+        }
+        println!("{} picked {}", player.name, query.card);
+        Ok(warp::reply::json(&PickResponse {
+            turn: player.turn,
+            img_path: card1.img_path.clone(),
+        }))
+    } else {
+        Err(warp::reject())
+    }
 }
 
 pub async fn ready(token: String, store: Store) -> Result<Json, Rejection> {
@@ -127,6 +151,7 @@ pub async fn ready(token: String, store: Store) -> Result<Json, Rejection> {
     }
     let player = player.unwrap();
     player.ready = true;
+    println!("{} is ready", player.name);
     for (_, player) in game.players.iter() {
         if !player.ready {
             return Ok(warp::reply::json(&"Success"));

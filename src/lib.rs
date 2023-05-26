@@ -17,6 +17,15 @@ pub mod queries {
     }
 }
 
+pub mod reply {
+
+    #[derive(serde::Serialize)]
+    pub struct PickResponse {
+        pub img_path: String,
+        pub turn: bool,
+    }
+}
+
 pub mod reject {
     use std::convert::Infallible;
 
@@ -89,13 +98,23 @@ pub mod memory {
     };
     use warp::sse::Event;
 
+    use crate::icons::LINKS;
+
     pub type Store = Arc<RwLock<MemoryStore>>;
 
     #[derive(Clone)]
     pub struct Card {
-        pub pair_with: usize,
         pub img_path: String,
         pub flipped: bool,
+    }
+
+    impl Card {
+        pub fn new(img_path: String) -> Self {
+            Card {
+                img_path,
+                flipped: false,
+            }
+        }
     }
 
     pub struct Player {
@@ -142,16 +161,14 @@ pub mod memory {
             let mut cards = Vec::with_capacity(columns * rows);
             let mut rng = thread_rng();
 
-            for i in 0..(columns * rows / 2) {
-                cards.push(Card {
-                    pair_with: i,
-                    // Image path needs to be figured out
-                    img_path: format!("{}.png", id),
-                    flipped: false,
-                });
+            let mut img = 0;
+            for i in 0..columns * rows {
+                cards.push(Card::new(LINKS[img].to_owned()));
+                if i % 2 != 0 {
+                    img += 1;
+                }
             }
 
-            cards.extend(cards.clone());
             cards.shuffle(&mut rng);
 
             Memory {
@@ -171,7 +188,7 @@ pub mod memory {
 }
 
 pub mod icons {
-    pub const LINKS: [&str; 20] = [
+    pub const LINKS: [&str; 27] = [
         "https://cdn-icons-png.flaticon.com/512/2977/2977402.png",
         "https://cdn-icons-png.flaticon.com/512/1998/1998659.png",
         "https://cdn-icons-png.flaticon.com/512/1864/1864475.png",
@@ -192,5 +209,12 @@ pub mod icons {
         "https://cdn-icons-png.flaticon.com/512/1864/1864521.png",
         "https://cdn-icons-png.flaticon.com/512/826/826912.png",
         "https://cdn-icons-png.flaticon.com/512/3359/3359579.png",
+        "https://cdn-icons-png.flaticon.com/512/1998/1998679.png",
+        "https://cdn-icons-png.flaticon.com/512/1864/1864473.png",
+        "https://cdn-icons-png.flaticon.com/512/3975/3975047.png",
+        "https://cdn-icons-png.flaticon.com/512/628/628341.png",
+        "https://cdn-icons-png.flaticon.com/512/375/375105.png",
+        "https://cdn-icons-png.flaticon.com/512/523/523495.png",
+        "https://cdn-icons-png.flaticon.com/512/1531/1531395.png",
     ];
 }
