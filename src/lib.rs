@@ -44,8 +44,28 @@ pub mod reject {
     impl reject::Reject for InvalidMasterKey {}
 
     #[derive(Debug)]
+    pub struct InvalidCard;
+    impl reject::Reject for InvalidCard {}
+
+    #[derive(Debug)]
     pub struct AlreadyExists;
     impl reject::Reject for AlreadyExists {}
+
+    #[derive(Debug)]
+    pub struct AlreadyRunning;
+    impl reject::Reject for AlreadyRunning {}
+
+    #[derive(Debug)]
+    pub struct NotYourTurn;
+    impl reject::Reject for NotYourTurn {}
+
+    #[derive(Debug)]
+    pub struct NotYetRunning;
+    impl reject::Reject for NotYetRunning {}
+
+    #[derive(Debug)]
+    pub struct AlreadyFlipped;
+    impl reject::Reject for AlreadyFlipped {}
 
     pub async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
         if err.find::<InvalidToken>().is_some() {
@@ -92,10 +112,7 @@ pub mod memory {
     use std::{collections::HashMap, convert::Infallible, sync::Arc};
 
     use rand::{seq::SliceRandom, thread_rng};
-    use tokio::sync::{
-        mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender},
-        RwLock,
-    };
+    use tokio::sync::RwLock;
     use warp::sse::Event;
 
     use crate::icons::LINKS;
@@ -122,21 +139,17 @@ pub mod memory {
         pub points: usize,
         pub turn: bool,
         pub ready: bool,
-        pub channel: (
-            UnboundedSender<Result<Event, Infallible>>,
-            UnboundedReceiver<Result<Event, Infallible>>,
-        ),
+        pub sender: Option<tokio::sync::mpsc::Sender<Result<Event, Infallible>>>,
     }
 
     impl Player {
         pub fn new(name: String) -> Self {
-            let channel = unbounded_channel::<Result<Event, Infallible>>();
             Player {
                 name,
                 points: 0,
                 turn: false,
                 ready: false,
-                channel,
+                sender: None,
             }
         }
     }

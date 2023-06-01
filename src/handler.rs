@@ -7,7 +7,10 @@ use warp::{reply::Json, sse::Event, Rejection, Reply};
 
 use memory_backend::memory::{GameState, Memory, Player, Store};
 use memory_backend::queries::{CreateQuery, JoinQuery, PickQuery};
-use memory_backend::reject::{AlreadyExists, InvalidMasterKey, InvalidToken, NoGameExists};
+use memory_backend::reject::{
+    AlreadyExists, AlreadyFlipped, AlreadyRunning, InvalidCard, InvalidMasterKey, InvalidToken,
+    NoGameExists, NotYetRunning, NotYourTurn,
+};
 
 pub async fn ping(query: Option<String>, store: Store) -> Result<impl Reply, Rejection> {
     let lock = store.read().await;
@@ -23,7 +26,7 @@ pub async fn ping(query: Option<String>, store: Store) -> Result<impl Reply, Rej
             return Ok(warp::reply::with_header(
                 reply,
                 "Set-Cookie",
-                "memory_token=0; Max-Age=0",
+                "memory_token=0; Max-Age=0, SameSite=None; Secure; HttpOnly",
             ));
         }
     }
@@ -70,18 +73,20 @@ pub async fn create(
 }
 
 pub async fn join(query: JoinQuery, store: Store) -> Result<impl Reply, Rejection> {
+    let mut lock = store.write().await;
+    let game = lock.game.as_mut().unwrap();
+    match game.state {
+        GameState::Lobby => (),
+        _ => return Err(warp::reject::custom(AlreadyRunning)),
+    }
+
     let token: String = thread_rng()
         .sample_iter(&rand::distributions::Alphanumeric)
         .take(30)
         .map(char::from)
         .collect();
 
-    let mut lock = store.write().await;
-
-    lock.game
-        .as_mut()
-        .unwrap()
-        .players
+    game.players
         .insert(token.clone(), Player::new(query.name.clone()));
 
     println!("{} joined and got the token: {}", query.name, token);
@@ -98,20 +103,27 @@ pub async fn join(query: JoinQuery, store: Store) -> Result<impl Reply, Rejectio
 
 pub async fn game_message(token: String, store: Store) -> Result<impl Reply, Rejection> {
     let (sender, receiver) = tokio::sync::mpsc::channel::<Result<Event, Infallible>>(2);
-    let receiverStream = ReceiverStream::new(receiver);
-    let stream = warp::sse::keep_alive().stream(receiverStream);
+    let mut lock = store.write().await;
+    let game = lock.game.as_mut().unwrap();
+    game.players.get_mut(&token).unwrap().sender = Some(sender);
+    let receiver_stream = ReceiverStream::new(receiver);
+    let stream = warp::sse::keep_alive().stream(receiver_stream);
     Ok(warp::sse::reply(stream))
 }
 
 pub async fn pick_card(token: String, query: PickQuery, store: Store) -> Result<Json, Rejection> {
     let lock = store.read().await;
     let game = lock.game.as_ref().unwrap();
+    match game.state {
+        GameState::Running => (),
+        _ => return Err(warp::reject::custom(NotYetRunning)),
+    }
     if let Some(player) = game.players.get(&token) {
         if !player.turn {
-            return Err(warp::reject());
+            return Err(warp::reject::custom(NotYourTurn));
         }
     } else {
-        return Err(warp::reject());
+        return Err(warp::reject::custom(InvalidToken));
     }
     let other_card = game.cards.iter().find(|x| x.flipped);
 
@@ -121,7 +133,7 @@ pub async fn pick_card(token: String, query: PickQuery, store: Store) -> Result<
 
     if let Some(card1) = game.cards.get_mut(query.card) {
         if card1.flipped {
-            return Err(warp::reject());
+            return Err(warp::reject::custom(AlreadyFlipped));
         }
         card1.flipped = true;
 
@@ -138,7 +150,7 @@ pub async fn pick_card(token: String, query: PickQuery, store: Store) -> Result<
             img_path: card1.img_path.clone(),
         }))
     } else {
-        Err(warp::reject())
+        Err(warp::reject::custom(InvalidCard))
     }
 }
 
@@ -158,5 +170,18 @@ pub async fn ready(token: String, store: Store) -> Result<Json, Rejection> {
         }
     }
     game.state = GameState::Running;
+    let player = game.players.values_mut().nth(0).unwrap();
+    player.turn = true;
+    player
+        .sender
+        .as_ref()
+        .unwrap()
+        .send(Ok(Event::default()
+            .event("turn")
+            .json_data("{turn: true}")
+            .unwrap_or(Event::default().comment("hello"))))
+        .await
+        .unwrap();
+
     Ok(warp::reply::json(&"Started"))
 }
