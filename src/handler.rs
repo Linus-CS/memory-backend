@@ -1,6 +1,6 @@
 use std::convert::Infallible;
 
-use memory_backend::reply::PickResponse;
+use memory_backend::reply::{PickResponse, StateResponse};
 use rand::{thread_rng, Rng};
 use tokio_stream::wrappers::ReceiverStream;
 use warp::{reply::Json, sse::Event, Rejection, Reply};
@@ -109,6 +109,19 @@ pub async fn game_message(token: String, store: Store) -> Result<impl Reply, Rej
     let receiver_stream = ReceiverStream::new(receiver);
     let stream = warp::sse::keep_alive().stream(receiver_stream);
     Ok(warp::sse::reply(stream))
+}
+
+pub async fn state(token: String, store: Store) -> Result<Json, Rejection> {
+    let lock = store.read().await;
+    let game = lock.game.as_ref().unwrap();
+    if let Some(player) = game.players.get(&token) {
+        Ok(warp::reply::json(&StateResponse {
+            game_state: game.state,
+            ready: player.ready,
+        }))
+    } else {
+        Err(warp::reject::custom(InvalidToken))
+    }
 }
 
 pub async fn pick_card(token: String, query: PickQuery, store: Store) -> Result<Json, Rejection> {

@@ -18,11 +18,18 @@ pub mod queries {
 }
 
 pub mod reply {
+    use crate::memory::GameState;
 
     #[derive(serde::Serialize)]
     pub struct PickResponse {
         pub img_path: String,
         pub turn: bool,
+    }
+
+    #[derive(serde::Serialize)]
+    pub struct StateResponse {
+        pub game_state: GameState,
+        pub ready: bool,
     }
 }
 
@@ -154,6 +161,7 @@ pub mod memory {
         }
     }
 
+    #[derive(serde::Serialize, Clone, Copy)]
     pub enum GameState {
         Lobby,
         Running,
