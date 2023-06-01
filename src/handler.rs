@@ -1,6 +1,6 @@
 use std::convert::Infallible;
 
-use memory_backend::reply::{PickResponse, StateResponse};
+use memory_backend::reply::{PickResponse, StateResponse, TurnResponse};
 use rand::{thread_rng, Rng};
 use tokio_stream::wrappers::ReceiverStream;
 use warp::{reply::Json, sse::Event, Rejection, Reply};
@@ -191,7 +191,7 @@ pub async fn ready(token: String, store: Store) -> Result<Json, Rejection> {
         .unwrap()
         .send(Ok(Event::default()
             .event("turn")
-            .json_data("{turn: true}")
+            .json_data(TurnResponse { turn: true })
             .unwrap_or(Event::default().comment("hello"))))
         .await
         .unwrap();

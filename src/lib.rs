@@ -31,6 +31,11 @@ pub mod reply {
         pub game_state: GameState,
         pub ready: bool,
     }
+
+    #[derive(serde::Serialize)]
+    pub struct TurnResponse {
+        pub turn: bool,
+    }
 }
 
 pub mod reject {
