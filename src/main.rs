@@ -58,6 +58,13 @@ async fn main() {
         .and(store.clone())
         .and_then(create);
 
+    let delete_route = warp::post()
+        .and(warp::cookie("master_key"))
+        .and(warp::path("delete"))
+        .and(warp::path::end())
+        .and(store.clone())
+        .and_then(delete);
+
     let join_route = warp::post()
         .and(warp::path("join"))
         .and(warp::query::<JoinQuery>())
@@ -92,6 +99,7 @@ async fn main() {
     let routes = ping_route
         .or(key_route)
         .or(create_route)
+        .or(delete_route)
         .or(join_route)
         .or(game_route)
         .or(ready_route)

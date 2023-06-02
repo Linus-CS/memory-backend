@@ -54,6 +54,17 @@ pub async fn create(
     }
 }
 
+pub async fn delete(master_key: String, store: Store) -> Result<Json, Rejection> {
+    let mut lock = store.write().await;
+
+    if master_key == lock.master_key {
+        lock.game = None;
+        Ok(warp::reply::json(&"Game deleted"))
+    } else {
+        Err(warp::reject::custom(InvalidMasterKey))
+    }
+}
+
 pub async fn join(query: JoinQuery, store: Store) -> Result<impl Reply, Rejection> {
     let mut lock = store.write().await;
     let game = lock.game.as_mut().unwrap();
