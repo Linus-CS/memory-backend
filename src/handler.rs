@@ -162,7 +162,7 @@ fn set_cookie_reponse(key: &str, value: String) -> Result<WithHeader<impl Reply>
         warp::reply(),
         "Set-Cookie",
         format!(
-            "{}={}; Path=/; max-age=31536000; SameSite=None; Secure; HttpOnly",
+            "{}={}; Path=/; Max-Age=31536000; SameSite=None; Secure; HttpOnly",
             key, value,
         ),
     ))
@@ -177,7 +177,7 @@ fn remove_cookie_response(
     return Ok(warp::reply::with_header(
         reply,
         "Set-Cookie",
-        format!("{}=0; Max-Age=0, SameSite=None; Secure; HttpOnly", key),
+        format!("{}=0; Max-Age=0; SameSite=None; Secure; HttpOnly", key),
     ));
 }
 
