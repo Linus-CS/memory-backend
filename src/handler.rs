@@ -59,6 +59,7 @@ pub async fn delete(master_key: String, store: Store) -> Result<Json, Rejection>
 
     if master_key == lock.master_key {
         lock.game = None;
+        print!("Game deleted.");
         Ok(warp::reply::json(&"Game deleted"))
     } else {
         Err(warp::reject::custom(InvalidMasterKey))

@@ -34,6 +34,11 @@ pub mod reply {
     }
 
     #[derive(serde::Serialize)]
+    pub struct GameOverResponse {
+        pub game_state: GameState,
+    }
+
+    #[derive(serde::Serialize)]
     pub struct InitResponse {
         pub game_state: GameState,
         pub ready: bool,
@@ -209,7 +214,7 @@ pub mod memory {
     use crate::{
         icons::LINKS,
         reject::{AlreadyFlipped, InvalidCard},
-        reply::{FlipResponse, HideResponse, InitResponse},
+        reply::{FlipResponse, GameOverResponse, HideResponse, InitResponse},
         sse_utils::broadcast_sse,
     };
 
@@ -362,6 +367,17 @@ pub mod memory {
                         card.flipped = false;
                         Self::send_hide_response(self.players.values().collect(), i).await;
                     }
+                }
+                if self.cards.iter().all(|x| x.gone) {
+                    self.state = GameState::Finished;
+                    broadcast_sse(
+                        "game_over",
+                        GameOverResponse {
+                            game_state: self.state,
+                        },
+                        self.players.values().collect(),
+                    )
+                    .await;
                 }
             }
             if next {
