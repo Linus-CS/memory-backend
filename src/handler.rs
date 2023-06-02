@@ -117,9 +117,9 @@ pub async fn pick_card(token: String, query: PickQuery, store: Store) -> Result<
     let other_card_img_path = {
         let other_card = game.cards.iter().find(|x| x.flipped);
         if let Some(card) = other_card {
-            card.img_path.clone()
+            Some(card.img_path.clone())
         } else {
-            "".to_owned()
+            None
         }
     };
 
@@ -218,11 +218,13 @@ async fn update_leaderboard(players: Vec<&Player>) {
     broadcast_sse("leaderboard", res, players).await;
 }
 
-fn check_for_pair(player: &mut Player, card: String, other_card: String) {
-    if card == other_card {
-        player.points += 1;
-    } else {
-        player.turn = false;
+fn check_for_pair(player: &mut Player, card: String, other_card: Option<String>) {
+    if let Some(other_card) = other_card {
+        if card == other_card {
+            player.points += 1;
+        } else {
+            player.turn = false;
+        }
     }
 }
 
