@@ -238,15 +238,17 @@ async fn send_sse(
     event_name: &str,
     sender: Option<&tokio::sync::mpsc::Sender<Result<Event, Infallible>>>,
 ) {
-    sender
-        .as_ref()
-        .unwrap()
-        .send(Ok(Event::default()
-            .event(event_name)
-            .json_data(reply)
-            .unwrap_or(Event::default().comment("hello"))))
-        .await
-        .unwrap();
+    if sender.is_some() {
+        sender
+            .as_ref()
+            .unwrap()
+            .send(Ok(Event::default()
+                .event(event_name)
+                .json_data(reply)
+                .unwrap_or(Event::default().comment("hello"))))
+            .await
+            .unwrap();
+    }
 }
 
 async fn start_game(game: &mut Memory) {
