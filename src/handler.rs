@@ -99,6 +99,7 @@ pub async fn state(token: String, store: Store) -> Result<Json, Rejection> {
 pub async fn pick_card(token: String, query: PickQuery, store: Store) -> Result<Json, Rejection> {
     let lock = store.read().await;
     let game = lock.game.as_ref().unwrap();
+    println!("Try card pick");
 
     match game.state {
         GameState::Running => (),
@@ -112,6 +113,7 @@ pub async fn pick_card(token: String, query: PickQuery, store: Store) -> Result<
     } else {
         return Err(warp::reject::custom(InvalidToken));
     }
+    println!("Got through");
 
     let other_card = game.cards.iter().find(|x| x.flipped);
 
