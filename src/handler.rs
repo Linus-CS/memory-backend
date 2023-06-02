@@ -99,7 +99,6 @@ pub async fn state(token: String, store: Store) -> Result<Json, Rejection> {
 pub async fn pick_card(token: String, query: PickQuery, store: Store) -> Result<Json, Rejection> {
     let lock = store.read().await;
     let game = lock.game.as_ref().unwrap();
-    println!("Try card pick");
 
     match game.state {
         GameState::Running => (),
@@ -113,14 +112,16 @@ pub async fn pick_card(token: String, query: PickQuery, store: Store) -> Result<
     } else {
         return Err(warp::reject::custom(InvalidToken));
     }
-    println!("Got through");
 
     let other_card = game.cards.iter().find(|x| x.flipped);
 
+    println!("Other card searched");
     let mut lock = store.write().await;
     let game = lock.game.as_mut().unwrap();
 
+    println!("lock");
     if let Some(card) = game.cards.get_mut(query.card) {
+        println!("card exists");
         if card.flipped {
             return Err(warp::reject::custom(AlreadyFlipped));
         }
@@ -258,4 +259,5 @@ async fn start_game(game: &mut Memory) {
     let player = game.players.values_mut().nth(0).unwrap();
     player.turn = true;
     send_sse("turn", &TurnResponse { turn: true }, player.sender.as_ref()).await;
+    println!("Started game.");
 }
