@@ -143,14 +143,53 @@ pub mod reject {
     }
 }
 
+pub mod sse_utils {
+    use std::convert::Infallible;
+
+    use warp::sse::Event;
+
+    use crate::memory::Player;
+
+    pub async fn broadcast_sse(
+        event_name: &str,
+        reply: impl serde::Serialize,
+        players: Vec<&Player>,
+    ) {
+        for player in players {
+            send_sse(event_name, &reply, player.sender.as_ref()).await;
+        }
+    }
+
+    pub async fn send_sse(
+        event_name: &str,
+        reply: &impl serde::Serialize,
+        channel: Option<&tokio::sync::mpsc::Sender<Result<Event, Infallible>>>,
+    ) {
+        if let Some(sender) = channel {
+            sender
+                .send(Ok(Event::default()
+                    .event(event_name)
+                    .json_data(reply)
+                    .unwrap_or(Event::default().comment("hello"))))
+                .await
+                .unwrap();
+        }
+    }
+}
+
 pub mod memory {
     use std::{collections::HashMap, convert::Infallible, sync::Arc};
 
-    use rand::{seq::SliceRandom, thread_rng};
+    use rand::{seq::SliceRandom, thread_rng, Rng};
     use tokio::sync::RwLock;
-    use warp::sse::Event;
+    use warp::{reply::Json, sse::Event, Rejection};
 
-    use crate::icons::LINKS;
+    use crate::{
+        icons::LINKS,
+        reject::{AlreadyFlipped, InvalidCard},
+        reply::FlipResponse,
+        sse_utils::broadcast_sse,
+    };
 
     pub type Store = Arc<RwLock<MemoryStore>>;
 
@@ -201,6 +240,7 @@ pub mod memory {
         pub players: HashMap<String, Player>,
         pub state: GameState,
         pub cards: Vec<Card>,
+        current_turn: usize,
     }
 
     impl Memory {
@@ -225,7 +265,92 @@ pub mod memory {
                 players: HashMap::new(),
                 state: GameState::Lobby,
                 cards,
+                current_turn: 0,
             }
+        }
+
+        pub async fn start(&mut self) {
+            self.state = GameState::Running;
+            let player = self.players.values_mut().nth(self.current_turn).unwrap();
+            player.turn = true;
+            println!("Started game.");
+        }
+
+        pub fn add_new_player(
+            &mut self,
+            name: String,
+        ) -> Result<String, crate::reject::AlreadyExists> {
+            if self.players.contains_key(&name) {
+                return Err(crate::reject::AlreadyExists);
+            }
+
+            let token: String = thread_rng()
+                .sample_iter(&rand::distributions::Alphanumeric)
+                .take(30)
+                .map(char::from)
+                .collect();
+
+            self.players
+                .insert(token.clone(), Player::new(name.clone()));
+
+            println!("{} joined and got the token: {}", name, token);
+            Ok(token)
+        }
+
+        pub async fn pick_card(
+            &mut self,
+            card_id: usize,
+            token: String,
+        ) -> Result<Json, Rejection> {
+            let other_card_img_path = {
+                let other_card = self.cards.iter().find(|x| x.flipped);
+                if let Some(card) = other_card {
+                    Some(card.img_path.clone())
+                } else {
+                    None
+                }
+            };
+
+            if let Some(card) = self.cards.get_mut(card_id) {
+                if card.flipped {
+                    return Err(warp::reject::custom(AlreadyFlipped));
+                }
+                card.flipped = true;
+                let player = self.players.get_mut(&token).unwrap();
+                println!("{} picked {}", player.name, card_id);
+
+                let next = Self::check_for_pair(player, card.img_path.clone(), other_card_img_path);
+                if next {
+                    self.current_turn = self.current_turn + 1 % self.players.len();
+                    let player = self.players.values_mut().nth(self.current_turn).unwrap();
+                    player.turn = true;
+                    println!("Next players turn.");
+                }
+
+                let players = self.players.values().collect();
+                Self::send_flip_response(players, card.img_path.clone(), card_id).await;
+                Ok(warp::reply::json(&"Success"))
+            } else {
+                Err(warp::reject::custom(InvalidCard))
+            }
+        }
+
+        fn check_for_pair(player: &mut Player, card: String, other_card: Option<String>) -> bool {
+            if let Some(other_card) = other_card {
+                if card == other_card {
+                    player.points += 1;
+                    return false;
+                } else {
+                    player.turn = false;
+                    return true;
+                }
+            }
+            false
+        }
+
+        async fn send_flip_response(players: Vec<&Player>, img_path: String, card_id: usize) {
+            let res = FlipResponse { img_path, card_id };
+            broadcast_sse("flipCard", res, players).await
         }
     }
 

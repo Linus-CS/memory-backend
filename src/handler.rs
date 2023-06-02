@@ -1,6 +1,7 @@
 use std::convert::Infallible;
 
 use memory_backend::reply::{FlipResponse, LeaderboardResponse, StateResponse};
+use memory_backend::sse_utils::broadcast_sse;
 use rand::{thread_rng, Rng};
 use tokio::sync::RwLockWriteGuard;
 use tokio_stream::wrappers::ReceiverStream;
@@ -62,11 +63,12 @@ pub async fn join(query: JoinQuery, store: Store) -> Result<impl Reply, Rejectio
         GameState::Lobby => (),
         _ => return Err(warp::reject::custom(AlreadyRunning)),
     }
-
-    let token = create_new_player(game, query.name);
-    update_leaderboard(game.players.values().collect()).await;
-
-    set_cookie_reponse("memory_token", token)
+    if let Ok(token) = game.add_new_player(query.name) {
+        update_leaderboard(game.players.values().collect()).await;
+        set_cookie_reponse("memory_token", token)
+    } else {
+        Err(warp::reject::custom(AlreadyExists))
+    }
 }
 
 pub async fn game_message(token: String, store: Store) -> Result<impl Reply, Rejection> {
@@ -114,30 +116,7 @@ pub async fn pick_card(token: String, query: PickQuery, store: Store) -> Result<
         return Err(warp::reject::custom(InvalidToken));
     }
 
-    let other_card_img_path = {
-        let other_card = game.cards.iter().find(|x| x.flipped);
-        if let Some(card) = other_card {
-            Some(card.img_path.clone())
-        } else {
-            None
-        }
-    };
-
-    if let Some(card) = game.cards.get_mut(query.card) {
-        if card.flipped {
-            return Err(warp::reject::custom(AlreadyFlipped));
-        }
-        card.flipped = true;
-        let player = game.players.get_mut(&token).unwrap();
-        println!("{} picked {}", player.name, query.card);
-        check_for_pair(player, card.img_path.clone(), other_card_img_path);
-
-        let players = game.players.values().collect();
-        send_flip_response(players, card.img_path.clone(), query.card).await;
-        Ok(warp::reply::json(&"Success"))
-    } else {
-        Err(warp::reject::custom(InvalidCard))
-    }
+    game.pick_card(query.card, token).await
 }
 
 pub async fn ready(token: String, store: Store) -> Result<Json, Rejection> {
@@ -159,7 +138,7 @@ pub async fn ready(token: String, store: Store) -> Result<Json, Rejection> {
         }
     }
 
-    start_game(game).await;
+    game.start().await;
     Ok(warp::reply::json(&"Started"))
 }
 
@@ -199,65 +178,7 @@ fn create_new_game(
     Ok(warp::reply::json(&"Success!"))
 }
 
-fn create_new_player(game: &mut Memory, name: String) -> String {
-    let token: String = thread_rng()
-        .sample_iter(&rand::distributions::Alphanumeric)
-        .take(30)
-        .map(char::from)
-        .collect();
-
-    game.players
-        .insert(token.clone(), Player::new(name.clone()));
-
-    println!("{} joined and got the token: {}", name, token);
-    token
-}
-
 async fn update_leaderboard(players: Vec<&Player>) {
     let res = LeaderboardResponse::from(&players);
     broadcast_sse("leaderboard", res, players).await;
-}
-
-fn check_for_pair(player: &mut Player, card: String, other_card: Option<String>) {
-    if let Some(other_card) = other_card {
-        if card == other_card {
-            player.points += 1;
-        } else {
-            player.turn = false;
-        }
-    }
-}
-
-async fn send_flip_response(players: Vec<&Player>, img_path: String, card_id: usize) {
-    let res = FlipResponse { img_path, card_id };
-    broadcast_sse("flipCard", res, players).await
-}
-
-async fn broadcast_sse(event_name: &str, reply: impl serde::Serialize, players: Vec<&Player>) {
-    for player in players {
-        send_sse(event_name, &reply, player.sender.as_ref()).await;
-    }
-}
-
-async fn send_sse(
-    event_name: &str,
-    reply: &impl serde::Serialize,
-    channel: Option<&tokio::sync::mpsc::Sender<Result<Event, Infallible>>>,
-) {
-    if let Some(sender) = channel {
-        sender
-            .send(Ok(Event::default()
-                .event(event_name)
-                .json_data(reply)
-                .unwrap_or(Event::default().comment("hello"))))
-            .await
-            .unwrap();
-    }
-}
-
-async fn start_game(game: &mut Memory) {
-    game.state = GameState::Running;
-    let player = game.players.values_mut().nth(0).unwrap();
-    player.turn = true;
-    println!("Started game.");
 }
