@@ -18,7 +18,7 @@ pub mod queries {
 }
 
 pub mod reply {
-    use crate::memory::GameState;
+    use crate::memory::{GameState, Player};
 
     #[derive(serde::Serialize)]
     pub struct PickResponse {
@@ -32,9 +32,37 @@ pub mod reply {
         pub ready: bool,
     }
 
+    impl StateResponse {
+        pub fn from(game_state: GameState, ready: bool) -> Self {
+            Self { game_state, ready }
+        }
+    }
+
     #[derive(serde::Serialize)]
     pub struct TurnResponse {
         pub turn: bool,
+    }
+
+    #[derive(serde::Serialize)]
+    pub struct FlipResponse {
+        pub card_id: usize,
+        pub img_path: String,
+    }
+
+    #[derive(serde::Serialize)]
+    pub struct LeaderboardResponse {
+        pub leaderboard: Vec<(String, usize)>,
+    }
+
+    impl LeaderboardResponse {
+        pub fn from(players: &Vec<&Player>) -> Self {
+            Self {
+                leaderboard: players
+                    .into_iter()
+                    .map(|p| (p.name.clone(), p.points))
+                    .collect(),
+            }
+        }
     }
 }
 
