@@ -139,15 +139,15 @@ pub async fn ready(token: String, store: Store) -> Result<Json, Rejection> {
         return Err(warp::reject::custom(InvalidToken));
     }
 
-    update_leaderboard(game.players.values().collect()).await;
-
     for (_, player) in game.players.iter() {
         if !player.ready {
+            update_leaderboard(game.players.values().collect()).await;
             return Ok(warp::reply::json(&"Success"));
         }
     }
 
     game.start().await;
+    update_leaderboard(game.players.values().collect()).await;
     Ok(warp::reply::json(&"Started"))
 }
 
