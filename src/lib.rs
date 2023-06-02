@@ -358,9 +358,7 @@ pub mod memory {
                     if pair && card.flipped {
                         card.gone = true;
                         Self::send_hide_response(self.players.values().collect(), i).await;
-                        continue;
                     }
-                    card.flipped = false;
                 }
             }
             if next {
@@ -400,6 +398,9 @@ pub mod memory {
             self.current_turn = (self.current_turn + 1) % self.players.len();
             let player = self.players.values_mut().nth(self.current_turn).unwrap();
             player.turn = true;
+            for card in self.cards.iter_mut() {
+                card.flipped = false;
+            }
             println!("Next players turn.");
         }
 
