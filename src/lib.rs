@@ -51,13 +51,13 @@ pub mod reply {
 
     #[derive(serde::Serialize)]
     pub struct LeaderboardResponse {
-        pub leaderboard: Vec<(String, usize)>,
+        pub players: Vec<(String, usize)>,
     }
 
     impl LeaderboardResponse {
         pub fn from(players: &Vec<&Player>) -> Self {
             Self {
-                leaderboard: players
+                players: players
                     .into_iter()
                     .map(|p| (p.name.clone(), p.points))
                     .collect(),

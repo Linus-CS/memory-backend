@@ -209,7 +209,7 @@ fn create_new_player(game: &mut Memory, name: String) -> String {
 
 async fn update_leaderboard(players: Vec<&Player>) {
     let res = LeaderboardResponse::from(&players);
-    broadcast_sse(res, "leaderboard", players).await;
+    broadcast_sse("leaderboard", res, players).await;
 }
 
 fn check_for_pair(player: &mut Player, card1: &Card, other_card: Option<&Card>) {
@@ -224,24 +224,22 @@ fn check_for_pair(player: &mut Player, card1: &Card, other_card: Option<&Card>) 
 
 async fn send_flip_response(players: Vec<&Player>, img_path: String, card_id: usize) {
     let res = FlipResponse { img_path, card_id };
-    broadcast_sse(res, "flipCard", players).await
+    broadcast_sse("flipCard", res, players).await
 }
 
-async fn broadcast_sse(reply: impl serde::Serialize, event_name: &str, players: Vec<&Player>) {
+async fn broadcast_sse(event_name: &str, reply: impl serde::Serialize, players: Vec<&Player>) {
     for player in players {
-        send_sse(&reply, event_name, player.sender.as_ref()).await;
+        send_sse(event_name, &reply, player.sender.as_ref()).await;
     }
 }
 
 async fn send_sse(
-    reply: &impl serde::Serialize,
     event_name: &str,
-    sender: Option<&tokio::sync::mpsc::Sender<Result<Event, Infallible>>>,
+    reply: &impl serde::Serialize,
+    channel: Option<&tokio::sync::mpsc::Sender<Result<Event, Infallible>>>,
 ) {
-    if sender.is_some() {
+    if let Some(sender) = channel {
         sender
-            .as_ref()
-            .unwrap()
             .send(Ok(Event::default()
                 .event(event_name)
                 .json_data(reply)
@@ -255,5 +253,5 @@ async fn start_game(game: &mut Memory) {
     game.state = GameState::Running;
     let player = game.players.values_mut().nth(0).unwrap();
     player.turn = true;
-    send_sse(&TurnResponse { turn: true }, "turn", player.sender.as_ref()).await;
+    send_sse("turn", &TurnResponse { turn: true }, player.sender.as_ref()).await;
 }
