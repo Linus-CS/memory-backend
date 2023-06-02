@@ -311,7 +311,9 @@ pub mod memory {
                 }
             };
 
-            if let Some(card) = self.cards.get_mut(card_id) {
+            let mut next = false;
+
+            let reply = if let Some(card) = self.cards.get_mut(card_id) {
                 if card.flipped {
                     return Err(warp::reject::custom(AlreadyFlipped));
                 }
@@ -319,20 +321,30 @@ pub mod memory {
                 let player = self.players.get_mut(&token).unwrap();
                 println!("{} picked {}", player.name, card_id);
 
-                let next = Self::check_for_pair(player, card.img_path.clone(), other_card_img_path);
-                if next {
-                    self.current_turn = self.current_turn + 1 % self.players.len();
-                    let player = self.players.values_mut().nth(self.current_turn).unwrap();
-                    player.turn = true;
-                    println!("Next players turn.");
-                }
+                next = Self::check_for_pair(player, card.img_path.clone(), other_card_img_path);
 
                 let players = self.players.values().collect();
                 Self::send_flip_response(players, card.img_path.clone(), card_id).await;
                 Ok(warp::reply::json(&"Success"))
             } else {
                 Err(warp::reject::custom(InvalidCard))
+            };
+
+            if next {
+                self.next_turn();
             }
+
+            reply
+        }
+
+        fn next_turn(&mut self) {
+            self.current_turn = (self.current_turn + 1) % self.players.len();
+            let player = self.players.values_mut().nth(self.current_turn).unwrap();
+            player.turn = true;
+            for card in self.cards.iter_mut() {
+                card.flipped = false;
+            }
+            println!("Next players turn.");
         }
 
         fn check_for_pair(player: &mut Player, card: String, other_card: Option<String>) -> bool {
