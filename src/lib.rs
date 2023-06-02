@@ -51,7 +51,7 @@ pub mod reply {
 
     #[derive(serde::Serialize)]
     pub struct LeaderboardResponse {
-        pub players: Vec<(String, usize)>,
+        pub players: Vec<(String, usize, bool)>,
     }
 
     impl LeaderboardResponse {
@@ -59,7 +59,7 @@ pub mod reply {
             Self {
                 players: players
                     .into_iter()
-                    .map(|p| (p.name.clone(), p.points))
+                    .map(|p| (p.name.clone(), p.points, p.ready))
                     .collect(),
             }
         }
