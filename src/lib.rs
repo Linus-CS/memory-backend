@@ -336,7 +336,7 @@ pub mod memory {
             let (mut next, mut pair) = (false, false);
 
             let reply = if let Some(card) = self.cards.get_mut(card_id) {
-                if card.flipped {
+                if card.flipped || card.gone {
                     return Err(warp::reject::custom(AlreadyFlipped));
                 }
                 card.flipped = true;
@@ -357,6 +357,7 @@ pub mod memory {
                 for (i, card) in self.cards.iter_mut().enumerate() {
                     if pair && card.flipped {
                         card.gone = true;
+                        card.flipped = false;
                         Self::send_hide_response(self.players.values().collect(), i).await;
                     }
                 }
