@@ -20,6 +20,8 @@ pub mod queries {
 pub mod reply {
     use crate::memory::{GameState, Player};
 
+    pub type Players = Vec<(String, usize, bool, bool)>;
+
     #[derive(serde::Serialize)]
     pub struct PickResponse {
         pub img_path: String,
@@ -37,7 +39,7 @@ pub mod reply {
         pub ready: bool,
         pub flipped: Vec<(usize, String)>,
         pub hidden: Vec<usize>,
-        pub players: Vec<(String, usize, bool, bool)>,
+        pub players: Players,
     }
 
     impl InitResponse {
@@ -46,7 +48,7 @@ pub mod reply {
             ready: bool,
             flipped: Vec<(usize, String)>,
             hidden: Vec<usize>,
-            players: Vec<(String, usize, bool, bool)>,
+            players: Players,
         ) -> Self {
             Self {
                 game_state,
@@ -66,7 +68,7 @@ pub mod reply {
 
     #[derive(serde::Serialize)]
     pub struct LeaderboardResponse {
-        pub players: Vec<(String, usize, bool, bool)>,
+        pub players: Players,
     }
 
     impl LeaderboardResponse {
