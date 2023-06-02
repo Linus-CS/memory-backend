@@ -97,8 +97,8 @@ pub async fn state(token: String, store: Store) -> Result<Json, Rejection> {
 }
 
 pub async fn pick_card(token: String, query: PickQuery, store: Store) -> Result<Json, Rejection> {
-    let lock = store.read().await;
-    let game = lock.game.as_ref().unwrap();
+    let mut lock = store.write().await;
+    let game = lock.game.as_mut().unwrap();
 
     match game.state {
         GameState::Running => (),
@@ -113,22 +113,23 @@ pub async fn pick_card(token: String, query: PickQuery, store: Store) -> Result<
         return Err(warp::reject::custom(InvalidToken));
     }
 
-    let other_card = game.cards.iter().find(|x| x.flipped);
+    let other_card_img_path = {
+        let other_card = game.cards.iter().find(|x| x.flipped);
+        if let Some(card) = other_card {
+            card.img_path.clone()
+        } else {
+            "".to_owned()
+        }
+    };
 
-    println!("Other card searched");
-    let mut lock = store.write().await;
-    let game = lock.game.as_mut().unwrap();
-
-    println!("lock");
     if let Some(card) = game.cards.get_mut(query.card) {
-        println!("card exists");
         if card.flipped {
             return Err(warp::reject::custom(AlreadyFlipped));
         }
         card.flipped = true;
         let player = game.players.get_mut(&token).unwrap();
         println!("{} picked {}", player.name, query.card);
-        check_for_pair(player, card, other_card);
+        check_for_pair(player, card.img_path.clone(), other_card_img_path);
 
         let reply = warp::reply::json(&TurnResponse { turn: player.turn });
         let players = game.players.values().collect();
@@ -217,13 +218,11 @@ async fn update_leaderboard(players: Vec<&Player>) {
     broadcast_sse("leaderboard", res, players).await;
 }
 
-fn check_for_pair(player: &mut Player, card1: &Card, other_card: Option<&Card>) {
-    if let Some(card2) = other_card {
-        if card1.img_path == card2.img_path {
-            player.points += 1;
-        } else {
-            player.turn = false;
-        }
+fn check_for_pair(player: &mut Player, card: String, other_card: String) {
+    if card == other_card {
+        player.points += 1;
+    } else {
+        player.turn = false;
     }
 }
 
