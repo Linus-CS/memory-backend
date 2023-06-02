@@ -27,12 +27,23 @@ pub mod reply {
     }
 
     #[derive(serde::Serialize)]
-    pub struct StateResponse {
+    pub struct HideResponse {
+        pub card_id: usize,
+    }
+
+    #[derive(serde::Serialize)]
+    pub struct InitResponse {
         pub game_state: GameState,
         pub ready: bool,
     }
 
-    impl StateResponse {
+    #[derive(serde::Serialize)]
+    pub struct StateResponse {
+        pub flipped: Vec<(usize, String)>,
+        pub hidden: Vec<usize>,
+    }
+
+    impl InitResponse {
         pub fn from(game_state: GameState, ready: bool) -> Self {
             Self { game_state, ready }
         }
@@ -187,7 +198,7 @@ pub mod memory {
     use crate::{
         icons::LINKS,
         reject::{AlreadyFlipped, InvalidCard},
-        reply::FlipResponse,
+        reply::{FlipResponse, HideResponse, StateResponse},
         sse_utils::broadcast_sse,
     };
 
@@ -197,6 +208,7 @@ pub mod memory {
     pub struct Card {
         pub img_path: String,
         pub flipped: bool,
+        pub gone: bool,
     }
 
     impl Card {
@@ -204,6 +216,7 @@ pub mod memory {
             Card {
                 img_path,
                 flipped: false,
+                gone: false,
             }
         }
     }
@@ -311,7 +324,7 @@ pub mod memory {
                 }
             };
 
-            let mut next = false;
+            let (mut next, mut pair) = (false, false);
 
             let reply = if let Some(card) = self.cards.get_mut(card_id) {
                 if card.flipped {
@@ -321,7 +334,8 @@ pub mod memory {
                 let player = self.players.get_mut(&token).unwrap();
                 println!("{} picked {}", player.name, card_id);
 
-                next = Self::check_for_pair(player, card.img_path.clone(), other_card_img_path);
+                (next, pair) =
+                    Self::check_for_pair(player, card.img_path.clone(), other_card_img_path);
 
                 let players = self.players.values().collect();
                 Self::send_flip_response(players, card.img_path.clone(), card_id).await;
@@ -330,6 +344,16 @@ pub mod memory {
                 Err(warp::reject::custom(InvalidCard))
             };
 
+            if pair {
+                for (i, card) in self.cards.iter_mut().enumerate() {
+                    if pair && card.flipped {
+                        card.gone = true;
+                        Self::send_hide_response(self.players.values().collect(), i).await;
+                        continue;
+                    }
+                    card.flipped = false;
+                }
+            }
             if next {
                 self.next_turn();
             }
@@ -337,32 +361,57 @@ pub mod memory {
             reply
         }
 
+        pub fn get_state(&self) -> StateResponse {
+            StateResponse {
+                flipped: self
+                    .cards
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, x)| x.flipped)
+                    .map(|(i, c)| (i, c.img_path.clone()))
+                    .collect::<Vec<_>>(),
+                hidden: self
+                    .cards
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, x)| x.gone)
+                    .map(|(i, _)| i)
+                    .collect::<Vec<_>>(),
+            }
+        }
+
         fn next_turn(&mut self) {
             self.current_turn = (self.current_turn + 1) % self.players.len();
             let player = self.players.values_mut().nth(self.current_turn).unwrap();
             player.turn = true;
-            for card in self.cards.iter_mut() {
-                card.flipped = false;
-            }
             println!("Next players turn.");
         }
 
-        fn check_for_pair(player: &mut Player, card: String, other_card: Option<String>) -> bool {
+        fn check_for_pair(
+            player: &mut Player,
+            card: String,
+            other_card: Option<String>,
+        ) -> (bool, bool) {
             if let Some(other_card) = other_card {
                 if card == other_card {
                     player.points += 1;
-                    return false;
+                    return (false, true);
                 } else {
                     player.turn = false;
-                    return true;
+                    return (true, false);
                 }
             }
-            false
+            (false, false)
         }
 
         async fn send_flip_response(players: Vec<&Player>, img_path: String, card_id: usize) {
             let res = FlipResponse { img_path, card_id };
             broadcast_sse("flipCard", res, players).await
+        }
+
+        async fn send_hide_response(players: Vec<&Player>, card_id: usize) {
+            let res = HideResponse { card_id };
+            broadcast_sse("hideCard", res, players).await
         }
     }
 

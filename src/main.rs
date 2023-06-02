@@ -72,13 +72,6 @@ async fn main() {
         .and(store.clone())
         .and_then(game_message);
 
-    let game_state_route = warp::get()
-        .and(warp::path("state"))
-        .and(warp::cookie("memory_token"))
-        .and(warp::path::end())
-        .and(store.clone())
-        .and_then(state);
-
     let ready_route = warp::post()
         .and(warp::cookie("memory_token"))
         .and(warp::path("ready"))
@@ -101,7 +94,6 @@ async fn main() {
         .or(create_route)
         .or(join_route)
         .or(game_route)
-        .or(game_state_route)
         .or(ready_route)
         .or(pick_card_route)
         .or(image_route)

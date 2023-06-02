@@ -1,7 +1,7 @@
 use std::convert::Infallible;
 
-use memory_backend::reply::{LeaderboardResponse, StateResponse};
-use memory_backend::sse_utils::broadcast_sse;
+use memory_backend::reply::{InitResponse, LeaderboardResponse, StateResponse};
+use memory_backend::sse_utils::{broadcast_sse, send_sse};
 use tokio::sync::RwLockWriteGuard;
 use tokio_stream::wrappers::ReceiverStream;
 use warp::reply::{WithHeader, WithStatus};
@@ -76,27 +76,32 @@ pub async fn game_message(token: String, store: Store) -> Result<impl Reply, Rej
     let mut lock = store.write().await;
     let game = lock.game.as_mut().unwrap();
 
-    game.players.get_mut(&token).unwrap().sender = Some(sender);
+    let player = game.players.get_mut(&token).unwrap();
+    let ready = player.ready.clone();
+    player.sender = Some(sender.clone());
 
     let receiver_stream = ReceiverStream::new(receiver);
     let stream = warp::sse::keep_alive().stream(receiver_stream);
 
     update_leaderboard(game.players.values().collect()).await;
+    send_init(game.state, ready, &sender).await;
+    send_state(game.get_state(), &sender).await;
 
     Ok(warp::sse::reply(stream))
 }
+pub async fn send_init(
+    state: GameState,
+    ready: bool,
+    sender: &tokio::sync::mpsc::Sender<Result<Event, Infallible>>,
+) {
+    send_sse("init", &InitResponse::from(state, ready), Some(sender)).await;
+}
 
-pub async fn state(token: String, store: Store) -> Result<Json, Rejection> {
-    let lock = store.read().await;
-    let game = lock.game.as_ref().unwrap();
-    if let Some(player) = game.players.get(&token) {
-        Ok(warp::reply::json(&StateResponse::from(
-            game.state,
-            player.ready,
-        )))
-    } else {
-        Err(warp::reject::custom(InvalidToken))
-    }
+pub async fn send_state(
+    res: StateResponse,
+    sender: &tokio::sync::mpsc::Sender<Result<Event, Infallible>>,
+) {
+    send_sse("state", &res, Some(sender)).await;
 }
 
 pub async fn pick_card(token: String, query: PickQuery, store: Store) -> Result<Json, Rejection> {
@@ -116,7 +121,9 @@ pub async fn pick_card(token: String, query: PickQuery, store: Store) -> Result<
         return Err(warp::reject::custom(InvalidToken));
     }
 
-    game.pick_card(query.card, token).await
+    let reply = game.pick_card(query.card, token).await;
+    update_leaderboard(game.players.values().collect()).await;
+    reply
 }
 
 pub async fn ready(token: String, store: Store) -> Result<Json, Rejection> {
