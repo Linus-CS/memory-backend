@@ -35,17 +35,26 @@ pub mod reply {
     pub struct InitResponse {
         pub game_state: GameState,
         pub ready: bool,
-    }
-
-    #[derive(serde::Serialize)]
-    pub struct StateResponse {
         pub flipped: Vec<(usize, String)>,
         pub hidden: Vec<usize>,
+        pub players: Vec<(String, usize, bool)>,
     }
 
     impl InitResponse {
-        pub fn from(game_state: GameState, ready: bool) -> Self {
-            Self { game_state, ready }
+        pub fn from(
+            game_state: GameState,
+            ready: bool,
+            flipped: Vec<(usize, String)>,
+            hidden: Vec<usize>,
+            players: Vec<(String, usize, bool)>,
+        ) -> Self {
+            Self {
+                game_state,
+                ready,
+                flipped,
+                hidden,
+                players,
+            }
         }
     }
 
@@ -198,7 +207,7 @@ pub mod memory {
     use crate::{
         icons::LINKS,
         reject::{AlreadyFlipped, InvalidCard},
-        reply::{FlipResponse, HideResponse, StateResponse},
+        reply::{FlipResponse, HideResponse, InitResponse},
         sse_utils::broadcast_sse,
     };
 
@@ -361,23 +370,30 @@ pub mod memory {
             reply
         }
 
-        pub fn get_state(&self) -> StateResponse {
-            StateResponse {
-                flipped: self
-                    .cards
-                    .iter()
-                    .enumerate()
-                    .filter(|(_, x)| x.flipped)
-                    .map(|(i, c)| (i, c.img_path.clone()))
-                    .collect::<Vec<_>>(),
-                hidden: self
-                    .cards
-                    .iter()
-                    .enumerate()
-                    .filter(|(_, x)| x.gone)
-                    .map(|(i, _)| i)
-                    .collect::<Vec<_>>(),
-            }
+        pub fn get_state(&self, ready: bool) -> InitResponse {
+            let flipped = self
+                .cards
+                .iter()
+                .enumerate()
+                .filter(|(_, x)| x.flipped)
+                .map(|(i, c)| (i, c.img_path.clone()))
+                .collect::<Vec<_>>();
+            let hidden = self
+                .cards
+                .iter()
+                .enumerate()
+                .filter(|(_, x)| x.gone)
+                .map(|(i, _)| i)
+                .collect::<Vec<_>>();
+
+            let players = self
+                .players
+                .values()
+                .into_iter()
+                .map(|p| (p.name.clone(), p.points, p.ready))
+                .collect();
+
+            InitResponse::from(self.state, ready, flipped, hidden, players)
         }
 
         fn next_turn(&mut self) {

@@ -1,6 +1,6 @@
 use std::convert::Infallible;
 
-use memory_backend::reply::{InitResponse, LeaderboardResponse, StateResponse};
+use memory_backend::reply::{InitResponse, LeaderboardResponse};
 use memory_backend::sse_utils::{broadcast_sse, send_sse};
 use tokio::sync::RwLockWriteGuard;
 use tokio_stream::wrappers::ReceiverStream;
@@ -83,25 +83,16 @@ pub async fn game_message(token: String, store: Store) -> Result<impl Reply, Rej
     let receiver_stream = ReceiverStream::new(receiver);
     let stream = warp::sse::keep_alive().stream(receiver_stream);
 
-    update_leaderboard(game.players.values().collect()).await;
-    send_init(game.state, ready, &sender).await;
-    send_state(game.get_state(), &sender).await;
+    send_state(&game.get_state(ready), &sender).await;
 
     Ok(warp::sse::reply(stream))
 }
-pub async fn send_init(
-    state: GameState,
-    ready: bool,
-    sender: &tokio::sync::mpsc::Sender<Result<Event, Infallible>>,
-) {
-    send_sse("init", &InitResponse::from(state, ready), Some(sender)).await;
-}
 
 pub async fn send_state(
-    res: StateResponse,
+    res: &InitResponse,
     sender: &tokio::sync::mpsc::Sender<Result<Event, Infallible>>,
 ) {
-    send_sse("state", &res, Some(sender)).await;
+    send_sse("state", res, Some(sender)).await;
 }
 
 pub async fn pick_card(token: String, query: PickQuery, store: Store) -> Result<Json, Rejection> {
