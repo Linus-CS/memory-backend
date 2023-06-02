@@ -37,7 +37,7 @@ pub mod reply {
         pub ready: bool,
         pub flipped: Vec<(usize, String)>,
         pub hidden: Vec<usize>,
-        pub players: Vec<(String, usize, bool)>,
+        pub players: Vec<(String, usize, bool, bool)>,
     }
 
     impl InitResponse {
@@ -46,7 +46,7 @@ pub mod reply {
             ready: bool,
             flipped: Vec<(usize, String)>,
             hidden: Vec<usize>,
-            players: Vec<(String, usize, bool)>,
+            players: Vec<(String, usize, bool, bool)>,
         ) -> Self {
             Self {
                 game_state,
@@ -66,7 +66,7 @@ pub mod reply {
 
     #[derive(serde::Serialize)]
     pub struct LeaderboardResponse {
-        pub players: Vec<(String, usize, bool)>,
+        pub players: Vec<(String, usize, bool, bool)>,
     }
 
     impl LeaderboardResponse {
@@ -74,7 +74,7 @@ pub mod reply {
             Self {
                 players: players
                     .into_iter()
-                    .map(|p| (p.name.clone(), p.points, p.ready))
+                    .map(|p| (p.name.clone(), p.points, p.ready, p.turn))
                     .collect(),
             }
         }
@@ -389,7 +389,7 @@ pub mod memory {
                 .players
                 .values()
                 .into_iter()
-                .map(|p| (p.name.clone(), p.points, p.ready))
+                .map(|p| (p.name.clone(), p.points, p.ready, p.turn))
                 .collect();
 
             InitResponse::from(self.state, ready, flipped, hidden, players)
