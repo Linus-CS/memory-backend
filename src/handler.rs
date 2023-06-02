@@ -1,8 +1,7 @@
 use std::convert::Infallible;
 
-use memory_backend::reply::{FlipResponse, LeaderboardResponse, StateResponse};
+use memory_backend::reply::{LeaderboardResponse, StateResponse};
 use memory_backend::sse_utils::broadcast_sse;
-use rand::{thread_rng, Rng};
 use tokio::sync::RwLockWriteGuard;
 use tokio_stream::wrappers::ReceiverStream;
 use warp::reply::{WithHeader, WithStatus};
@@ -11,8 +10,8 @@ use warp::{reply::Json, sse::Event, Rejection, Reply};
 use memory_backend::memory::{GameState, Memory, MemoryStore, Player, Store};
 use memory_backend::queries::{CreateQuery, JoinQuery, PickQuery};
 use memory_backend::reject::{
-    AlreadyExists, AlreadyFlipped, AlreadyRunning, InvalidCard, InvalidMasterKey, InvalidToken,
-    NoGameExists, NotYetRunning, NotYourTurn,
+    AlreadyExists, AlreadyRunning, InvalidMasterKey, InvalidToken, NoGameExists, NotYetRunning,
+    NotYourTurn,
 };
 
 pub async fn ping(query: Option<String>, store: Store) -> Result<impl Reply, Rejection> {
@@ -82,6 +81,8 @@ pub async fn game_message(token: String, store: Store) -> Result<impl Reply, Rej
     let receiver_stream = ReceiverStream::new(receiver);
     let stream = warp::sse::keep_alive().stream(receiver_stream);
 
+    update_leaderboard(game.players.values().collect()).await;
+
     Ok(warp::sse::reply(stream))
 }
 
@@ -89,7 +90,6 @@ pub async fn state(token: String, store: Store) -> Result<Json, Rejection> {
     let lock = store.read().await;
     let game = lock.game.as_ref().unwrap();
     if let Some(player) = game.players.get(&token) {
-        update_leaderboard(game.players.values().collect()).await;
         Ok(warp::reply::json(&StateResponse::from(
             game.state,
             player.ready,
