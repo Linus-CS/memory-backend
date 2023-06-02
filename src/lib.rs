@@ -39,11 +39,6 @@ pub mod reply {
     }
 
     #[derive(serde::Serialize)]
-    pub struct TurnResponse {
-        pub turn: bool,
-    }
-
-    #[derive(serde::Serialize)]
     pub struct FlipResponse {
         pub card_id: usize,
         pub img_path: String,

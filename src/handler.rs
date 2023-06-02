@@ -1,13 +1,13 @@
 use std::convert::Infallible;
 
-use memory_backend::reply::{FlipResponse, LeaderboardResponse, StateResponse, TurnResponse};
+use memory_backend::reply::{FlipResponse, LeaderboardResponse, StateResponse};
 use rand::{thread_rng, Rng};
 use tokio::sync::RwLockWriteGuard;
 use tokio_stream::wrappers::ReceiverStream;
 use warp::reply::{WithHeader, WithStatus};
 use warp::{reply::Json, sse::Event, Rejection, Reply};
 
-use memory_backend::memory::{Card, GameState, Memory, MemoryStore, Player, Store};
+use memory_backend::memory::{GameState, Memory, MemoryStore, Player, Store};
 use memory_backend::queries::{CreateQuery, JoinQuery, PickQuery};
 use memory_backend::reject::{
     AlreadyExists, AlreadyFlipped, AlreadyRunning, InvalidCard, InvalidMasterKey, InvalidToken,
@@ -87,6 +87,7 @@ pub async fn state(token: String, store: Store) -> Result<Json, Rejection> {
     let lock = store.read().await;
     let game = lock.game.as_ref().unwrap();
     if let Some(player) = game.players.get(&token) {
+        update_leaderboard(game.players.values().collect()).await;
         Ok(warp::reply::json(&StateResponse::from(
             game.state,
             player.ready,
@@ -131,10 +132,9 @@ pub async fn pick_card(token: String, query: PickQuery, store: Store) -> Result<
         println!("{} picked {}", player.name, query.card);
         check_for_pair(player, card.img_path.clone(), other_card_img_path);
 
-        let reply = warp::reply::json(&TurnResponse { turn: player.turn });
         let players = game.players.values().collect();
         send_flip_response(players, card.img_path.clone(), query.card).await;
-        Ok(reply)
+        Ok(warp::reply::json(&"Success"))
     } else {
         Err(warp::reject::custom(InvalidCard))
     }
@@ -257,6 +257,5 @@ async fn start_game(game: &mut Memory) {
     game.state = GameState::Running;
     let player = game.players.values_mut().nth(0).unwrap();
     player.turn = true;
-    send_sse("turn", &TurnResponse { turn: true }, player.sender.as_ref()).await;
     println!("Started game.");
 }
