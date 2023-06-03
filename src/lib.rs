@@ -371,7 +371,7 @@ pub mod memory {
                 if self.cards.iter().all(|x| x.gone) {
                     self.state = GameState::Finished;
                     broadcast_sse(
-                        "game_over",
+                        "gameOver",
                         GameOverResponse {
                             game_state: self.state,
                         },
