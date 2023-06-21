@@ -485,7 +485,7 @@ pub mod icons {
         "https://cdn-icons-png.flaticon.com/512/3975/3975047.png",
         "https://cdn-icons-png.flaticon.com/512/628/628341.png",
         "https://cdn-icons-png.flaticon.com/512/375/375105.png",
-        "https://cdn-icons-png.flaticon.com/512/523/523495.png",
+        "https://manga-mafia.de/media/catalog/product/cache/2/image/9df78eab33525d08d6e5fb8d27136e95/a/b/abydco456.jpg",
         "https://cdn-icons-png.flaticon.com/512/1531/1531395.png",
     ];
 }
