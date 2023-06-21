@@ -460,7 +460,7 @@ pub mod memory {
 
 pub mod icons {
     pub const LINKS: [&str; 27] = [
-        "https://cdn-icons-png.flaticon.com/512/2977/2977402.png",
+        "https://www.zooplus.de/magazin/wp-content/uploads/2021/04/AdobeStock_175183320-1536x1023.jpeg",
         "https://cdn-icons-png.flaticon.com/512/1998/1998659.png",
         "https://cdn-icons-png.flaticon.com/512/1864/1864475.png",
         "https://cdn-icons-png.flaticon.com/512/3069/3069172.png",
