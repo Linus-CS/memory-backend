@@ -462,7 +462,7 @@ pub mod icons {
     pub const LINKS: [&str; 27] = [
         "https://www.zooplus.de/magazin/wp-content/uploads/2021/04/AdobeStock_175183320-1536x1023.jpeg",
         "https://www.thesportsman.com/media/images/admin/football/original/Ronaldo_WORLDIE.jpg",
-        "https://cdn-icons-png.flaticon.com/512/1864/1864475.png",
+        "https://ichef.bbci.co.uk/news/976/cpsprodpb/4B2E/production/_112764291_minecraft.jpg",
         "https://cdn-icons-png.flaticon.com/512/3069/3069172.png",
         "https://cdn-icons-png.flaticon.com/512/2153/2153090.png",
         "https://external-content.duckduckgo.com/iu/?u=http%3A%2F%2Fbilder.4ever.eu%2Fdata%2Fdownload%2Ftiere%2Fhaschen%2Fhasen-154275.jpg&f=1&nofb=1&ipt=a5b5801561db52435e33491017f6aaa394b5460d4f5c3dc4f84c0af9ddb97695&ipo=images",
