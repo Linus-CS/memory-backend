@@ -473,7 +473,7 @@ pub mod icons {
         "https://cdn-icons-png.flaticon.com/512/1998/1998627.png",
         "https://cdn-icons-png.flaticon.com/512/3196/3196017.png",
         "https://cdn-icons-png.flaticon.com/512/1067/1067840.png",
-        "https://cdn-icons-png.flaticon.com/512/1864/1864472.png",
+        "https://img1.cgtrader.com/items/4013852/70e58e37f4/large/stumble-guys-inferno-dragon-3d-model-stl.jpg",
         "https://cdn-icons-png.flaticon.com/512/2977/2977327.png",
         "https://cdn-icons-png.flaticon.com/512/1010/1010028.png",
         "https://cdn-icons-png.flaticon.com/512/1998/1998804.png",
