@@ -485,7 +485,7 @@ pub mod icons {
         "https://cdn-icons-png.flaticon.com/512/3975/3975047.png",
         "https://cdn-icons-png.flaticon.com/512/628/628341.png",
         "https://cdn-icons-png.flaticon.com/512/375/375105.png",
-        "https://manga-mafia.de/media/catalog/product/cache/2/image/9df78eab33525d08d6e5fb8d27136e95/a/b/abydco456.jpg",
+        "https://i1.sndcdn.com/artworks-zb580lF09s4tjzEW-GlPzhw-t500x500.jpg",
         "https://cdn.pixabay.com/photo/2022/07/09/22/16/michael-jordan-7311821_960_720.png",
     ];
 }
