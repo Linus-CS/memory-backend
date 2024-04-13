@@ -477,7 +477,7 @@ pub mod icons {
         "https://cdn-icons-png.flaticon.com/512/2977/2977327.png",
         "https://cdn-icons-png.flaticon.com/512/1010/1010028.png",
         "https://cdn-icons-png.flaticon.com/512/1998/1998804.png",
-        "https://cdn-icons-png.flaticon.com/512/1864/1864521.png",
+        "https://i.ibb.co/cNJ6PZV/Image20240413114441.jpg",
         "https://cdn-icons-png.flaticon.com/512/826/826912.png",
         "http://www.nintendoworldreport.com/media/29905/4/32.jpg",
         "https://cdn-icons-png.flaticon.com/512/1998/1998679.png",
