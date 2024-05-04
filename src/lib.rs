@@ -481,7 +481,7 @@ pub mod icons {
         "https://cdn-icons-png.flaticon.com/512/826/826912.png",
         "http://www.nintendoworldreport.com/media/29905/4/32.jpg",
         "https://cdn-icons-png.flaticon.com/512/1998/1998679.png",
-        "https://cdn-icons-png.flaticon.com/512/1864/1864473.png",
+        "https://www.lego.com/cdn/cs/set/assets/blt9973a3d28277242c/Launch_03_Hero-XL_03-Hero-XL-Launch-Desktop.jpg?fit=crop&format=webply&quality=80&width=1600&height=1000&dpr=1",
         "https://cdn-icons-png.flaticon.com/512/3975/3975047.png",
         "https://cdn-icons-png.flaticon.com/512/628/628341.png",
         "https://cdn-icons-png.flaticon.com/512/375/375105.png",
