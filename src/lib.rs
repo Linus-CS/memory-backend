@@ -474,7 +474,7 @@ pub mod icons {
         "https://cdn-icons-png.flaticon.com/512/3196/3196017.png",
         "https://cdn-icons-png.flaticon.com/512/1067/1067840.png",
         "https://img1.cgtrader.com/items/4013852/70e58e37f4/large/stumble-guys-inferno-dragon-3d-model-stl.jpg",
-        "https://cdn-icons-png.flaticon.com/512/2977/2977327.png",
+        "https://www.lego.com/cdn/cs/set/assets/blt5157080434f0c032/76218.png?format=webply&fit=bounds&quality=75&width=800&height=800&dpr=1",
         "https://cdn-icons-png.flaticon.com/512/1010/1010028.png",
         "https://cdn-icons-png.flaticon.com/512/1998/1998804.png",
         "https://i.ibb.co/cNJ6PZV/Image20240413114441.jpg",
