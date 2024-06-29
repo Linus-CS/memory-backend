@@ -469,7 +469,7 @@ pub mod icons {
         "https://cdn-icons-png.flaticon.com/512/809/809052.png",
         "https://cdn-icons-png.flaticon.com/512/1998/1998610.png",
         "https://cdn-icons-png.flaticon.com/512/1864/1864470.png",
-        "https://cdn-icons-png.flaticon.com/512/1998/1998713.png",
+        "https://mim.p7s1.io/pis/ld/e53bzChLCVyZ-c1vEwXZAanB-DJ78rnq2V2gRWTHzVV6NywNWMSJCEGmZ4YSENP-WRL0b9lo2zmFQhTMhL0yNQ_pt1Vsd5nZlOJ_GBl2E-dB2WNcHLVStkCJCHpmaQCkqDck4PhO3eY/profile:original?rect=0%2C50%2C3087%2C1736",
         "https://cdn-icons-png.flaticon.com/512/1998/1998627.png",
         "https://cdn-icons-png.flaticon.com/512/3196/3196017.png",
         "https://cdn-icons-png.flaticon.com/512/1067/1067840.png",
