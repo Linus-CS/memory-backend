@@ -470,7 +470,7 @@ pub mod icons {
         "https://cdn-icons-png.flaticon.com/512/1998/1998610.png",
         "https://cdn-icons-png.flaticon.com/512/1864/1864470.png",
         "https://mim.p7s1.io/pis/ld/e53bzChLCVyZ-c1vEwXZAanB-DJ78rnq2V2gRWTHzVV6NywNWMSJCEGmZ4YSENP-WRL0b9lo2zmFQhTMhL0yNQ_pt1Vsd5nZlOJ_GBl2E-dB2WNcHLVStkCJCHpmaQCkqDck4PhO3eY/profile:original?rect=0%2C50%2C3087%2C1736",
-        "https://cdn.shopify.com/s/files/1/0656/5947/0063/files/knockedloose_081822_mainbanner.jpg?v=1660833994&width=1500",
+        "https://wallpapers.com/images/high/cool-neon-hoodie-profile-picture-vt4w54fxrvenydvu.webp",
         "https://cdn-icons-png.flaticon.com/512/3196/3196017.png",
         "https://cdn-icons-png.flaticon.com/512/1067/1067840.png",
         "https://img1.cgtrader.com/items/4013852/70e58e37f4/large/stumble-guys-inferno-dragon-3d-model-stl.jpg",
