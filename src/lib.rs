@@ -461,7 +461,7 @@ pub mod memory {
 pub mod icons {
     pub const LINKS: [&str; 27] = [
         "https://www.zooplus.de/magazin/wp-content/uploads/2021/04/AdobeStock_175183320-1536x1023.jpeg",
-        "https://www.thesportsman.com/media/images/admin/football/original/Ronaldo_WORLDIE.jpg",
+        "https://ih1.redbubble.net/image.5291259497.5712/raf,360x360,075,t,fafafa:ca443f4786.jpg",
         "https://ichef.bbci.co.uk/news/976/cpsprodpb/4B2E/production/_112764291_minecraft.jpg",
         "https://cdn-icons-png.flaticon.com/512/3069/3069172.png",
         "https://bgr.com/wp-content/uploads/2015/08/darth-vader.jpg",
