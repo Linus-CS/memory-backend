@@ -473,7 +473,7 @@ pub mod icons {
         "https://wallpapers.com/images/high/cool-neon-hoodie-profile-picture-vt4w54fxrvenydvu.webp",
         "https://cdn-icons-png.flaticon.com/512/3196/3196017.png",
         "https://cdn-icons-png.flaticon.com/512/1067/1067840.png",
-        "https://imgur.com/a/hzuQXmd",
+        "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fi.pinimg.com%2F736x%2F6c%2F02%2F87%2F6c0287cdc85c259cd343bb37310f0096.jpg&f=1&nofb=1&ipt=003bebdecd8bdb7b64f50dc2346eaa53bd03e7c7e5d72e55eb57b99c366888e6",
         "https://www.lego.com/cdn/cs/set/assets/blt5157080434f0c032/76218.png?format=webply&fit=bounds&quality=75&width=800&height=800&dpr=1",
         "https://cdn-icons-png.flaticon.com/512/1010/1010028.png",
         "https://cdn-icons-png.flaticon.com/512/1998/1998804.png",
